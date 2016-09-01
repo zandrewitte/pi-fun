@@ -2,7 +2,6 @@ from kafka import KafkaConsumer
 from kafka import KafkaProducer
 from singleton import Singleton
 import ast
-# from multiprocessing import Pool
 from pathos.multiprocessing import ProcessingPool as Pool
 
 
