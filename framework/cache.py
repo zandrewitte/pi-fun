@@ -1,5 +1,5 @@
 from sys import argv
-from redis import ConnectionPool, StrictRedis
+from redis import ConnectionPool, StrictRedis, ConnectionError
 import ast
 from singleton import Singleton
 
@@ -21,26 +21,30 @@ class Cache(object):
 def cache(cache_key, seconds, with_args=False):
     def decorated(f):
         def wrapper(*args, **kwargs):
-            c = Cache().get_strict()
+            try:
+                c = Cache().get_strict()
 
-            if with_args:
-                key = "%s_%s" % (cache_key, "_".join(map(str, kwargs.values())))
-            else:
-                key = cache_key
+                if with_args:
+                    key = "%s_%s" % (cache_key, "_".join(map(str, kwargs.values())))
+                else:
+                    key = cache_key
 
-            if c.exists(key):
-                print "Cache Fetched"
-                return ast.literal_eval(c.get(key))
-            else:
-                print "Calculated"
-                try:
-                    response = f(*args, **kwargs)
-                    c.set(key, response, seconds)
-                    return response
-                except NoCacheResponse as e:
-                    return e.value, e.status_code
-                except ValueError:
-                    return {}, 204
+                if c.exists(key):
+                    print "Cache Fetched"
+                    return ast.literal_eval(c.get(key))
+                else:
+                    print "Calculated"
+                    try:
+                        response = f(*args, **kwargs)
+                        c.set(key, response, seconds)
+                        return response
+                    except NoCacheResponse as e:
+                        return e.value, e.status_code
+                    except ValueError:
+                        return {}, 204
+            except ConnectionError as e:
+                print 'Redis Connection Error: %s' % e.message
+                return f(*args, **kwargs)
         return wrapper
     return decorated
 
