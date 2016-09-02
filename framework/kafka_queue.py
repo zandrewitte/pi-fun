@@ -3,6 +3,7 @@ from kafka.errors import ConnectionError
 from singleton import Singleton
 import ast
 from pathos.multiprocessing import ProcessingPool as Pool
+import threading
 
 
 class Producer(object):
@@ -17,25 +18,31 @@ class Producer(object):
 
 
 class Consumer(object):
-    # __metaclass__ = Singleton
+    __metaclass__ = Singleton
 
-    def __init__(self, ):
+    def __init__(self):
         self.consumer = KafkaConsumer(bootstrap_servers='localhost:9092',
                                       value_deserializer=self.message_serializer
                                       )
-
         self.function_set = {}
         self.pool = Pool(8)
+        self.consumeThread = threading.Thread(target=self.consume_async)
 
     def add_subscription(self, topic_subscribe):
-        self.consumer.subscribe([topic_subscribe.topic])
+        if self.consumer.subscription() is not None:
+            self.consumer.subscribe(list(self.consumer.subscription() | {topic_subscribe.topic}))
+        else:
+            self.consumer.subscribe([topic_subscribe.topic])
         self.function_set[topic_subscribe.topic] = topic_subscribe
+        if not self.consumeThread.isAlive():
+            self.consumeThread.start()
 
     def subscribe(self, *topic_subscribes):
         topics = list(map(lambda t_sub: t_sub.topic, topic_subscribes))
         self.consumer.subscribe(topics)
         self.function_set = dict(zip(topics, topic_subscribes))
-        self.consume_async()
+        if not self.consumeThread.isAlive():
+            self.consumeThread.start()
 
     @staticmethod
     def message_serializer(message):
@@ -75,7 +82,6 @@ def subscribe(topic, serializing_function):
         try:
             c = Consumer()
             c.add_subscription(TopicSubscribe(topic, f, serializing_function))
-            c.consume_async()
 
         except ConnectionError as e:
             print 'Kafka Connection Error: %s' % e.message

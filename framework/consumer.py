@@ -13,12 +13,9 @@ def receive_another(user):
     print 'Another %s' % str(user)
 
 
-# receive(User('test@mail.com', 'pass'))
-
 # Consumer().subscribe(
 #     TopicSubscribe('test2', receive_another, User.deserialize),
 #     TopicSubscribe('this', receive, User.deserialize)
 # )
-
-while True:
-    pass
+#
+# print 'Overhere'
