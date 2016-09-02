@@ -11,7 +11,7 @@ class Producer(object):
 
     def __init__(self):
         print 'Running Init'
-        self.producer = KafkaProducer(bootstrap_servers='localhost:9092')
+        self.producer = KafkaProducer(bootstrap_servers=['localhost:9090', 'localhost:9091', 'localhost:9092'])
 
     def publish(self, topic, obj, serializing_func, key=None, partition=None):
         self.producer.send(topic, str(serializing_func(obj)), key, partition)
@@ -21,7 +21,7 @@ class Consumer(object):
     __metaclass__ = Singleton
 
     def __init__(self):
-        self.consumer = KafkaConsumer(bootstrap_servers='localhost:9092',
+        self.consumer = KafkaConsumer(bootstrap_servers=['localhost:9090', 'localhost:9091', 'localhost:9092'],
                                       value_deserializer=self.message_serializer
                                       )
         self.function_set = {}

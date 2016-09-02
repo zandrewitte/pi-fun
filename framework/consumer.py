@@ -2,15 +2,15 @@ from kafka_queue import Consumer, TopicSubscribe, subscribe
 from user import User
 
 
-@subscribe('test2', User.deserialize)
+@subscribe('topic3', User.deserialize)
 def receive(user):
     print user.email
     print user.password
 
 
-@subscribe('this', User.deserialize)
-def receive_another(user):
-    print 'Another %s' % str(user)
+# @subscribe('topic2', User.deserialize)
+# def receive_another(user):
+#     print 'Another %s' % str(user)
 
 
 # Consumer().subscribe(
