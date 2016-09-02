@@ -1,5 +1,6 @@
 from marshmallow import Schema, fields, post_load
 import uuid
+import dill
 
 
 class User(object):
@@ -7,9 +8,6 @@ class User(object):
         self.uuid = uuid.uuid4()
         self.email = email
         self.password = password
-
-    def __repr__(self):
-        return 'uuid: {self.uuid!r}, email: {self.email!r}, password: {self.password!r}'.format(self=self)
 
     def serialize(self):
         return UserSchema(strict=True).dump(self).data
@@ -27,3 +25,6 @@ class UserSchema(Schema):
     @post_load
     def make_user(self, data):
         return User(data["email"], data["password"])
+
+
+u = User('emal@emal.com', 'test')

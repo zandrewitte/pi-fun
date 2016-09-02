@@ -1,13 +1,24 @@
-from kafka_queue import Consumer
+from kafka_queue import Consumer, TopicSubscribe, subscribe
 from user import User
 
-cons = Consumer('test2')
 
-
+@subscribe('test2', User.deserialize)
 def receive(user):
     print user.email
     print user.password
 
-cons.consume_async(receive, User.deserialize)
 
-print 'overhere'
+@subscribe('this', User.deserialize)
+def receive_another(user):
+    print 'Another %s' % str(user)
+
+
+# receive(User('test@mail.com', 'pass'))
+
+# Consumer().subscribe(
+#     TopicSubscribe('test2', receive_another, User.deserialize),
+#     TopicSubscribe('this', receive, User.deserialize)
+# )
+
+while True:
+    pass

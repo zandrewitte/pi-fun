@@ -1,5 +1,5 @@
-from kafka import KafkaConsumer
-from kafka import KafkaProducer
+from kafka import KafkaConsumer, KafkaProducer
+from kafka.errors import ConnectionError
 from singleton import Singleton
 import ast
 from pathos.multiprocessing import ProcessingPool as Pool
@@ -9,6 +9,7 @@ class Producer(object):
     __metaclass__ = Singleton
 
     def __init__(self):
+        print 'Running Init'
         self.producer = KafkaProducer(bootstrap_servers='localhost:9092')
 
     def publish(self, topic, obj, serializing_func, key=None, partition=None):
@@ -18,12 +19,23 @@ class Producer(object):
 class Consumer(object):
     # __metaclass__ = Singleton
 
-    def __init__(self, *topics):
+    def __init__(self, ):
         self.consumer = KafkaConsumer(bootstrap_servers='localhost:9092',
                                       value_deserializer=self.message_serializer
                                       )
-        self.consumer.subscribe(list(topics))
+
+        self.function_set = {}
         self.pool = Pool(8)
+
+    def add_subscription(self, topic_subscribe):
+        self.consumer.subscribe([topic_subscribe.topic])
+        self.function_set[topic_subscribe.topic] = topic_subscribe
+
+    def subscribe(self, *topic_subscribes):
+        topics = list(map(lambda t_sub: t_sub.topic, topic_subscribes))
+        self.consumer.subscribe(topics)
+        self.function_set = dict(zip(topics, topic_subscribes))
+        self.consume_async()
 
     @staticmethod
     def message_serializer(message):
@@ -32,24 +44,39 @@ class Consumer(object):
         except Exception as e:
             print 'Error While Serializing Message (%s). Reason : %s' % (message, e.message)
 
-    def consume_async(self, f, serialize_func):
+    def consume_async(self):
         for message in self.consumer:
-            self.pool.pipe(self.handle_message, message, f, serialize_func)
+            self.pool.pipe(self.handle_message, self.function_set, message)
+
+    def consume_sync(self):
+        for message in self.consumer:
+            self.handle_message(self.function_set, message)
 
     @staticmethod
-    def handle_message(message, f, serialize_func):
+    def handle_message(function_set, message):
         print 'Received Message on Topic: %s, Payload: %s' % (message.topic, message.value)
         try:
+            _ = function_set[message.topic]
             if message.value is not None:
-                f(serialize_func(message.value))
+                _.handle_function(_.serializing_function(message.value))
         except Exception as e:
             print 'Error While Executing consumer function with Message (%s). Reason : %s' % (message, e.message)
 
-    def consume_sync(self, f, serialize_func):
-        for message in self.consumer:
-            print 'Received Message on Topic: %s, Payload: %s' % (message.topic, message.value)
-            try:
-                if message.value is not None:
-                    f(serialize_func(message.value))
-            except Exception as e:
-                print 'Error While Executing consumer function with Message (%s). Reason : %s' % (message, e.message)
+
+class TopicSubscribe(object):
+    def __init__(self, topic, handle_function, serializing_function):
+        self.topic = topic
+        self.handle_function = handle_function
+        self.serializing_function = serializing_function
+
+
+def subscribe(topic, serializing_function):
+    def decorated(f):
+        try:
+            c = Consumer()
+            c.add_subscription(TopicSubscribe(topic, f, serializing_function))
+            c.consume_async()
+
+        except ConnectionError as e:
+            print 'Kafka Connection Error: %s' % e.message
+    return decorated
