@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
-declare -a arr=("test-topic1" "test-topic2" "test-topic3")
+zookeeper=$1
+replication_factor=$2
+partitions=$3
+topics=$4
 
-for i in "${arr[@]}"
+for i in $(echo ${topics} | sed "s/,/ /g")
 do
-   kafka-topics --create --zookeeper localhost:2181 --replication-factor 3 --partitions 1 --topic $i
+    kafka-topics --create --zookeeper ${zookeeper} --replication-factor ${replication_factor} --partitions ${partitions} --topic ${i}
 done
-

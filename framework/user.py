@@ -1,6 +1,5 @@
 from marshmallow import Schema, fields, post_load
 import uuid
-import dill
 
 
 class User(object):
