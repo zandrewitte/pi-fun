@@ -2,7 +2,7 @@ from kafka import KafkaConsumer, KafkaProducer
 from kafka.errors import ConnectionError
 from singleton import Singleton
 import ast
-from pathos.multiprocessing import ProcessingPool as Pool
+from concurrent.futures import ThreadPoolExecutor
 import threading
 import yaml_reader
 import logging
@@ -32,7 +32,7 @@ class Consumer(object):
         self.consumer = KafkaConsumer(**dict(read.get('kafka', {}).items() + read.get('kafka-consumer', {}).items()
                                              + [('value_deserializer', self.message_serializer)]))
         self.function_set = {}
-        self.pool = Pool(8)
+        self.executor = ThreadPoolExecutor(max_workers=8)
         self.consumeThread = threading.Thread(target=self.consume_async)
 
     def add_subscription(self, topic_subscribe):
@@ -60,11 +60,11 @@ class Consumer(object):
 
     def consume_async(self):
         for message in self.consumer:
-            self.pool.pipe(self.handle_message, self.function_set, message)
+            self.executor.submit(self.handle_message, self.function_set, message)
 
     @staticmethod
     def handle_message(function_set, message):
-        print 'Received Message on Topic: %s, Payload: %s' % (message.topic, message.value)
+        # print 'Received Message on Topic: %s, Payload: %s' % (message.topic, message.value)
         try:
             _ = function_set[message.topic]
             if message.value is not None:
