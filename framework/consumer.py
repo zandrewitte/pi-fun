@@ -12,7 +12,7 @@ def receive(user):
 
 @subscribe('ppro.incoming.event', Event.deserialize)
 def consume_event(event):
-    print event.header.get("requestUUID")
+    print event.header
     print event.meta
     print event.payload
 

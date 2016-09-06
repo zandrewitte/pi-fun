@@ -62,10 +62,6 @@ class Consumer(object):
         for message in self.consumer:
             self.pool.pipe(self.handle_message, self.function_set, message)
 
-    def consume_sync(self):
-        for message in self.consumer:
-            self.handle_message(self.function_set, message)
-
     @staticmethod
     def handle_message(function_set, message):
         print 'Received Message on Topic: %s, Payload: %s' % (message.topic, message.value)
@@ -74,7 +70,8 @@ class Consumer(object):
             if message.value is not None:
                 _.handle_function(_.serializing_function(message.value))
         except Exception as e:
-            logging.getLogger().error('Error While Executing consumer function with Message (%s). Reason : %s' % (message, e.message))
+            logging.getLogger().error('Error While Executing consumer function with Message (%s). Reason : %s' %
+                                      (message, e.message))
 
 
 class TopicSubscribe(object):

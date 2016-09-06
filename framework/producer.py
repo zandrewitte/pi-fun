@@ -3,7 +3,6 @@ from event import Event
 from kafka_queue import Producer
 import time
 import uuid
-import ast
 
 
 while True:
