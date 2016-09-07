@@ -30,7 +30,7 @@ class UserResource(Resource):
     def __init__(self):
         self.cache = Cache().get_strict()
 
-    @cache('some_other_key', 10, True)
+    @cache('some_other_key', 10, with_args=True)
     def get(self, user_uuid):
         return ast.literal_eval(self.cache.hget('users', user_uuid))
 
