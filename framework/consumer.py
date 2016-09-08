@@ -1,20 +1,22 @@
 from kafka_queue import Consumer, TopicSubscribe, subscribe
 from user import User
 from event import Event
+from topics import Topics
 
 
-@subscribe('topic3', User.deserialize)
+@subscribe(Topics.Topic.test, User.deserialize)
 def receive(user):
     print user.email
     print user.password
     print user.uuid
 
 
-@subscribe('ppro.incoming.event', Event.deserialize)
+@subscribe(Topics.PlayerPro.Incoming.Event, Event.deserialize)
 def consume_event(event):
     print 'requestUUID : %s \n' % event.header.get("requestUUID")
     print 'userUUID : %s \n' % event.meta.get("userUUID")
-    print 'eventName : %s \n' % event.payload.get("title")
+    for element in event.payload.get('body'):
+        print element.get('id')
 
 
 # @subscribe('topic2', User.deserialize)
