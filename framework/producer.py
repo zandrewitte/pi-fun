@@ -33,5 +33,5 @@ while True:
                               ))
 
         Producer().publish(Topics.PlayerPro.Incoming.Event, event, Event.serialize)
-        # Producer().publish('topic3', User('some_other-%s@mail.com' % i, 'test'), User.serialize)
-        # time.sleep(2)
+        Producer().publish(Topics.PlayerPro.Jobs.Analytics, event, Event.serialize)
+        time.sleep(2)
